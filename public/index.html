@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Web Terminal</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: monospace;
+            background-color: #000;
+            color: #fff;
+            padding: 10px;
+        }
+
+        #output {
+            width: 100%;
+            height: 80vh;
+            background-color: #000;
+            color: #0f0;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: auto;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+        }
+
+        #input {
+            width: 100%;
+            background-color: #000;
+            color: #0f0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const socket = io.connect();
+            const output = document.getElementById('output');
+            const input = document.getElementById('input');
+            let prompt = '';
+
+            socket.on('stdout', function (data) {
+                output.value += data;
+                if (data.trim().startsWith('PS')) {
+                    prompt = data;
+                }
+            });
+
+            socket.on('stderr', function (data) {
+                output.value += data;
+            });
+
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (input.value.trim() === 'clear') {
+                        output.value = prompt;
+                    } else {
+                        socket.emit('stdin', input.value + '\n');
+                    }
+                    input.value = '';
+                }
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <textarea id="output" readonly></textarea>
+    <input id="input" type="text" autofocus>
+</body>
+
+</html>
